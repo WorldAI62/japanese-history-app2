@@ -1,0 +1,718 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>日本の歴史学習アプリ</title>
+    <!-- Tailwind CSS CDNを読み込み -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        /* Interフォントを読み込み */
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap');
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #f0f2f5; /* 薄いグレーの背景 */
+            display: flex;
+            justify-content: center;
+            align-items: flex-start; /* 上部に配置 */
+            min-height: 100vh; /* 画面全体を使う */
+            margin: 0;
+            padding: 20px; /* 全体のパディング */
+            box-sizing: border-box; /* パディングを幅に含める */
+        }
+        .container {
+            background-color: #ffffff; /* 白い背景 */
+            border-radius: 16px; /* 角を丸く */
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1); /* 影を追加 */
+            padding: 32px;
+            width: 100%;
+            max-width: 900px; /* 最大幅を広げる */
+            text-align: center;
+            display: flex;
+            flex-direction: column;
+            gap: 24px; /* 要素間のスペース */
+        }
+        .era-selection {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            justify-content: center;
+        }
+        .era-button {
+            padding: 10px 20px;
+            border-radius: 8px;
+            background-color: #e0f2fe; /* 薄い青 */
+            color: #1e3a8a; /* 濃い青 */
+            font-weight: 600;
+            cursor: pointer;
+            transition: background-color 0.3s ease, transform 0.2s ease;
+            border: none;
+        }
+        .era-button:hover {
+            background-color: #bfdbfe; /* ホバーで少し濃く */
+            transform: translateY(-2px);
+        }
+        .era-button.active {
+            background-color: #3b82f6; /* アクティブな色 */
+            color: white;
+            box-shadow: 0 4px 8px rgba(59, 130, 246, 0.3);
+        }
+        .era-button:active {
+            transform: translateY(0);
+        }
+
+        .content-area {
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+
+        .event-list-section, .event-detail-section, .ai-chat-section {
+            background-color: #f8fafc; /* 薄い背景 */
+            border-radius: 12px;
+            padding: 20px;
+            border: 1px solid #e2e8f0;
+            text-align: left;
+        }
+
+        .event-list ul {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+        }
+        .event-list li {
+            padding: 12px 15px;
+            border-bottom: 1px solid #e2e8f0;
+            cursor: pointer;
+            transition: background-color 0.2s ease;
+            font-weight: 500;
+            color: #374151;
+        }
+        .event-list li:last-child {
+            border-bottom: none;
+        }
+        .event-list li:hover {
+            background-color: #eff6ff; /* ホバーで薄い青 */
+        }
+        .event-list li.selected {
+            background-color: #dbeafe; /* 選択された色 */
+            color: #1e40af;
+            font-weight: 600;
+        }
+
+        .event-detail-section h3 {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: #1f2937;
+            margin-bottom: 10px;
+        }
+        /* 会話形式のスタイル */
+        .event-detail-section .story-text {
+            font-size: 1rem;
+            color: #4b5563;
+            line-height: 1.6;
+            margin-bottom: 10px;
+            background-color: #ecfdf5; /* 薄い緑の背景 */
+            padding: 15px;
+            border-radius: 12px;
+            border: 1px solid #a7f3d0;
+        }
+        .event-detail-section .character-text {
+            font-size: 1rem;
+            color: #4b5563;
+            line-height: 1.6;
+            margin-bottom: 10px;
+            background-color: #fef3c7; /* 薄い黄色の背景 */
+            padding: 15px;
+            border-radius: 12px;
+            border: 1px solid #fcd34d;
+        }
+        .event-detail-section strong {
+            color: #1f2937;
+        }
+
+        /* 詳しく解説ボタン */
+        .detailed-explanation-button {
+            padding: 10px 20px;
+            border-radius: 8px;
+            background-color: #ef4444; /* 赤色 */
+            color: white;
+            font-weight: 600;
+            cursor: pointer;
+            transition: background-color 0.3s ease, transform 0.2s ease;
+            border: none;
+            margin-top: 15px;
+            display: none; /* 初期状態では非表示 */
+        }
+        .detailed-explanation-button:hover {
+            background-color: #dc2626; /* 濃い赤色 */
+            transform: translateY(-2px);
+        }
+        .detailed-explanation-button:active {
+            transform: translateY(0);
+        }
+
+        /* 詳しい解説エリア */
+        .detailed-explanation-area {
+            margin-top: 20px;
+            background-color: #fffbeb; /* 非常に薄い黄色 */
+            border: 2px dashed #fcd34d; /* 点線のボーダーで漫画風 */
+            color: #78350f; /* 濃い茶色の文字 */
+            padding: 20px;
+            border-radius: 16px;
+            text-align: left;
+            line-height: 1.8;
+            white-space: pre-wrap; /* 改行を保持 */
+            word-wrap: break-word; /* 長い単語を折り返す */
+            box-shadow: 0 6px 12px rgba(0, 0, 0, 0.08); /* 影を追加 */
+            font-size: 1.1rem; /* 少し大きめのフォント */
+            display: none; /* 初期状態では非表示 */
+        }
+        .detailed-explanation-area .speaker {
+            font-weight: 700;
+            color: #047857; /* 緑色の名前 */
+            margin-right: 5px;
+        }
+        .detailed-explanation-area .narration {
+            font-style: italic;
+            color: #6b7280; /* グレーのナレーション */
+            display: block;
+            margin-bottom: 5px;
+        }
+
+
+        .ai-chat-section textarea {
+            width: 100%;
+            padding: 12px;
+            border: 1px solid #cbd5e1;
+            border-radius: 8px;
+            font-size: 1rem;
+            min-height: 80px;
+            resize: vertical;
+            margin-bottom: 10px;
+        }
+        .ai-chat-section button {
+            padding: 10px 20px;
+            border-radius: 8px;
+            background-color: #6366f1; /* 紫色 */
+            color: white;
+            font-weight: 600;
+            cursor: pointer;
+            transition: background-color 0.3s ease, transform 0.2s ease;
+            border: none;
+        }
+        .ai-chat-section button:hover {
+            background-color: #4f46e5; /* 濃い紫色 */
+            transform: translateY(-2px);
+        }
+        .ai-chat-section button:active {
+            transform: translateY(0);
+        }
+        .ai-response-area {
+            margin-top: 25px; /* 吹き出しのしっぽのスペース */
+            position: relative; /* 吹き出しのしっぽのため */
+            background-color: #e0f2fe; /* 薄い青の吹き出し */
+            border: 1px solid #90cdf4; /* 少し濃いボーダー */
+            color: #1e3a8a; /* 濃い青の文字 */
+            padding: 20px;
+            border-radius: 20px; /* 角を丸く */
+            min-height: 50px;
+            text-align: left;
+            line-height: 1.6;
+            white-space: pre-wrap; /* 改行を保持 */
+            word-wrap: break-word; /* 長い単語を折り返す */
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.05); /* 影を追加 */
+        }
+        /* 吹き出しのしっぽ */
+        .ai-response-area::before {
+            content: '';
+            position: absolute;
+            top: -10px; /* 吹き出しの上部に配置 */
+            left: 30px; /* 位置調整 */
+            width: 0;
+            height: 0;
+            border-left: 10px solid transparent;
+            border-right: 10px solid transparent;
+            border-bottom: 10px solid #e0f2fe; /* 背景色に合わせる */
+            z-index: 1; /* 吹き出し本体より手前に */
+        }
+        .ai-response-area::after {
+            content: '';
+            position: absolute;
+            top: -11px; /* 吹き出しのしっぽのボーダー */
+            left: 30px; /* 位置調整 */
+            width: 0;
+            height: 0;
+            border-left: 10px solid transparent;
+            border-right: 10px solid transparent;
+            border-bottom: 10px solid #90cdf4; /* ボーダー色に合わせる */
+            z-index: 0; /* 吹き出し本体より奥に */
+        }
+
+        .loading-spinner {
+            border: 4px solid #f3f3f3;
+            border-top: 4px solid #3498db;
+            border-radius: 50%;
+            width: 20px;
+            height: 20px;
+            animation: spin 1s linear infinite;
+            display: inline-block;
+            vertical-align: middle;
+            margin-left: 10px;
+        }
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        /* レスポンシブデザイン */
+        @media (min-width: 768px) {
+            .content-area {
+                flex-direction: row; /* デスクトップでは横並び */
+            }
+            .event-list-section {
+                flex: 1; /* イベントリストを均等に広げる */
+            }
+            .event-detail-section {
+                flex: 2; /* イベント詳細を広めに */
+            }
+            .ai-chat-section {
+                flex: 1; /* AIチャットは単独で */
+            }
+            .main-sections {
+                display: flex;
+                gap: 20px;
+            }
+            .left-panel {
+                flex: 1;
+                display: flex;
+                flex-direction: column;
+                gap: 20px;
+            }
+            .right-panel {
+                flex: 1;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1 class="text-3xl font-bold text-gray-800 mb-6">日本の歴史学習アプリ</h1>
+
+        <div class="era-selection" id="eraSelection">
+            <!-- 時代選択ボタンがここに動的に生成されます -->
+        </div>
+
+        <div class="main-sections">
+            <div class="left-panel">
+                <div class="event-list-section">
+                    <h2 class="text-2xl font-semibold text-gray-700 mb-4">出来事一覧</h2>
+                    <ul id="eventList" class="event-list">
+                        <!-- 出来事リストがここに動的に生成されます -->
+                    </ul>
+                </div>
+
+                <div class="event-detail-section" id="eventDetailSection">
+                    <h2 class="text-2xl font-semibold text-gray-700 mb-4">出来事の詳細</h2>
+                    <h3 id="eventDetailTitle" class="text-xl font-bold text-gray-800">出来事を選択してください</h3>
+                    <p id="eventDetailSummary" class="story-text"></p> <!-- 新しいクラスを追加 -->
+                    <p id="eventDetailFigures" class="character-text"></p> <!-- 新しいクラスを追加 -->
+                    <button id="detailedExplanationButton" class="detailed-explanation-button">詳しく解説！</button>
+                    <div id="detailedExplanationArea" class="detailed-explanation-area">
+                        <!-- 詳しい解説がここに表示されます -->
+                    </div>
+                </div>
+            </div>
+
+            <div class="right-panel">
+                <div class="ai-chat-section">
+                    <h2 class="text-2xl font-semibold text-gray-700 mb-4">AIに質問する</h2>
+                    <textarea id="aiQuestionInput" placeholder="日本の歴史について何でも質問してください。例：「織田信長について教えて」「江戸時代の文化は？」"></textarea>
+                    <button id="askAiButton">AIに質問</button>
+                    <div id="aiResponseArea" class="ai-response-area">
+                        AIからの回答がここに表示されます。
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // 歴史データの定義
+        const historyData = {
+            "古代": {
+                "description": "日本の国家形成期から奈良時代まで。律令国家の確立と仏教文化の興隆。",
+                "events": [
+                    {
+                        "name": "聖徳太子の十七条憲法",
+                        "summary": "推古天皇の摂政として政治を行った聖徳太子が制定した、官僚や国民の道徳的規範を示した憲法。仏教の尊重、和を重んじることなどが説かれた。",
+                        "figures": "聖徳太子、推古天皇"
+                    },
+                    {
+                        "name": "大化の改新",
+                        "summary": "中大兄皇子（後の天智天皇）と中臣鎌足（後の藤原鎌足）らが蘇我入鹿を暗殺し、政治改革を行った出来事。公地公民制の導入など、律令国家体制の基礎を築いた。",
+                        "figures": "中大兄皇子、中臣鎌足、蘇我入鹿"
+                    },
+                    {
+                        "name": "平城京遷都",
+                        "summary": "710年に元明天皇によって奈良に都が移された出来事。唐の都長安を模して造営され、約70年間にわたり日本の政治・文化の中心となった。",
+                        "figures": "元明天皇"
+                    }
+                ]
+            },
+            "中世": {
+                "description": "武士の台頭と幕府政治の時代。源平合戦から室町時代まで。",
+                "events": [
+                    {
+                        "name": "源頼朝の鎌倉幕府開府",
+                        "summary": "源平合戦に勝利した源頼朝が、1192年に鎌倉に武士による政権を樹立した出来事。これにより、武士の時代が本格的に始まった。",
+                        "figures": "源頼朝、北条政子"
+                    },
+                    {
+                        "name": "元寇",
+                        "summary": "13世紀後半にモンゴル帝国（元）が日本に2度にわたって侵攻した出来事。文永の役（1274年）と弘安の役（1281年）があり、神風と呼ばれる暴風雨により撃退された。",
+                        "figures": "フビライ・ハン、北条時宗"
+                    },
+                    {
+                        "name": "応仁の乱",
+                        "summary": "1467年から1477年まで続いた室町幕府の将軍継承問題と有力守護大名間の対立が原因で起こった内乱。これにより室町幕府の権威は失墜し、戦国時代へと突入した。",
+                        "figures": "足利義政、細川勝元、山名宗全"
+                    }
+                ]
+            },
+            "近世": {
+                "description": "織田・豊臣による統一から江戸幕府の成立、そして鎖国政策の時代。",
+                "events": [
+                    {
+                        "name": "織田信長の桶狭間の戦い",
+                        "summary": "1560年、織田信長が今川義元の大軍を奇襲によって破った戦い。この勝利により信長は尾張を統一し、天下統一への道を歩み始めた。",
+                        "figures": "織田信長、今川義元"
+                    },
+                    {
+                        "name": "豊臣秀吉の天下統一",
+                        "summary": "織田信長の死後、豊臣秀吉が全国を統一した一連の過程。小田原征伐（1590年）で後北条氏を滅ぼし、名実ともに天下人となった。",
+                        "figures": "豊臣秀吉、徳川家康"
+                    },
+                    {
+                        "name": "徳川家康の江戸幕府開府",
+                        "summary": "関ヶ原の戦い（1600年）で勝利した徳川家康が、1603年に江戸に幕府を開いた出来事。これにより約260年続く江戸時代が始まった。",
+                        "figures": "徳川家康"
+                    }
+                ]
+            },
+            "近代": {
+                "description": "明治維新から第二次世界大戦終結まで。近代国家の形成と国際社会への進出。",
+                "events": [
+                    {
+                        "name": "廃藩置県",
+                        "summary": "1871年、明治政府が全国の藩を廃止して県を設置した改革。これにより中央集権体制が確立され、近代国家としての基盤が固まった。",
+                        "figures": "明治天皇、大久保利通"
+                    },
+                    {
+                        "name": "日清戦争",
+                        "summary": "1894年から1895年にかけて日本と清の間で行われた戦争。朝鮮半島の支配権をめぐって勃発し、日本の勝利により国際的地位が向上した。",
+                        "figures": "伊藤博文、李鴻章"
+                    },
+                    {
+                        "name": "日露戦争",
+                        "summary": "1904年から1905年にかけて日本とロシアの間で行われた戦争。満州と朝鮮半島の権益をめぐって勃発し、日本の勝利に終わった。ポーツマス条約で終結。",
+                        "figures": "小村寿太郎、セオドア・ルーズベルト"
+                    }
+                ]
+            },
+            "現代": {
+                "description": "第二次世界大戦後から現在まで。高度経済成長と国際社会での役割。",
+                "events": [
+                    {
+                        "name": "第二次世界大戦終結",
+                        "summary": "1945年8月15日、日本がポツダム宣言を受諾し、第二次世界大戦が終結した。これにより連合国による占領統治が始まった。",
+                        "figures": "昭和天皇、マッカーサー"
+                    },
+                    {
+                        "name": "東京オリンピック (1964年)",
+                        "summary": "1964年に東京で開催されたアジア初のオリンピック。戦後の日本の復興と経済成長を世界に示した象徴的な出来事となった。",
+                        "figures": "池田勇人"
+                    },
+                    {
+                        "name": "平成の始まり",
+                        "summary": "1989年1月7日に昭和天皇が崩御し、明仁親王が即位して元号が平成に改元された。バブル経済の崩壊や阪神・淡路大震災など、激動の時代となった。",
+                        "figures": "明仁上皇"
+                    }
+                ]
+            }
+        };
+
+        // DOM要素の取得
+        const eraSelection = document.getElementById('eraSelection');
+        const eventList = document.getElementById('eventList');
+        const eventDetailTitle = document.getElementById('eventDetailTitle');
+        const eventDetailSummary = document.getElementById('eventDetailSummary');
+        const eventDetailFigures = document.getElementById('eventDetailFigures');
+        const detailedExplanationButton = document.getElementById('detailedExplanationButton'); // 新しいボタン
+        const detailedExplanationArea = document.getElementById('detailedExplanationArea'); // 新しい解説エリア
+        const aiQuestionInput = document.getElementById('aiQuestionInput');
+        const askAiButton = document.getElementById('askAiButton');
+        const aiResponseArea = document.getElementById('aiResponseArea');
+
+        let currentSelectedEra = null; // 現在選択されている時代
+        let currentSelectedEvent = null; // 現在選択されている出来事
+
+        /**
+         * 時代選択ボタンを動的に生成します。
+         */
+        function createEraButtons() {
+            Object.keys(historyData).forEach(eraName => {
+                const button = document.createElement('button');
+                button.textContent = eraName;
+                button.classList.add('era-button');
+                button.dataset.era = eraName;
+                button.addEventListener('click', () => selectEra(eraName));
+                eraSelection.appendChild(button);
+            });
+        }
+
+        /**
+         * 時代を選択し、出来事リストを更新します。
+         * @param {string} eraName - 選択された時代の名前
+         */
+        function selectEra(eraName) {
+            // アクティブなボタンのスタイルを更新
+            document.querySelectorAll('.era-button').forEach(button => {
+                button.classList.remove('active');
+            });
+            document.querySelector(`.era-button[data-era="${eraName}"]`).classList.add('active');
+
+            currentSelectedEra = eraName;
+            displayEvents(eraName);
+            resetEventDetail(); // 時代が変わったら詳細をリセット
+            aiResponseArea.textContent = 'AIからの回答がここに表示されます。'; // AI回答もリセット
+            aiResponseArea.style.color = '#1e3a8a'; // デフォルトの色に戻す
+        }
+
+        /**
+         * 選択された時代の出来事を表示します。
+         * @param {string} eraName - 表示する時代の名前
+         */
+        function displayEvents(eraName) {
+            eventList.innerHTML = ''; // リストをクリア
+            currentSelectedEvent = null; // 選択中の出来事をリセット
+
+            const era = historyData[eraName];
+            if (era && era.events) {
+                era.events.forEach(event => {
+                    const listItem = document.createElement('li');
+                    listItem.textContent = event.name;
+                    listItem.dataset.eventName = event.name;
+                    listItem.addEventListener('click', () => selectEvent(event));
+                    eventList.appendChild(listItem);
+                });
+            }
+        }
+
+        /**
+         * 出来事を選択し、詳細を表示します。
+         * @param {object} event - 選択された出来事のオブジェクト
+         */
+        function selectEvent(event) {
+            // アクティブな出来事のスタイルを更新
+            document.querySelectorAll('.event-list li').forEach(item => {
+                item.classList.remove('selected');
+            });
+            document.querySelector(`.event-list li[data-event-name="${event.name}"]`).classList.add('selected');
+
+            currentSelectedEvent = event;
+            eventDetailTitle.textContent = event.name;
+            // 会話形式の表示に変更
+            eventDetailSummary.innerHTML = `<strong>物語のはじまり！</strong><br>${event.summary}`;
+            eventDetailFigures.innerHTML = `<strong>登場人物はね...</strong><br>${event.figures}`;
+
+            // 出来事が選択されたら「詳しく解説」ボタンを表示
+            detailedExplanationButton.style.display = 'block';
+            detailedExplanationArea.style.display = 'none'; // 新しい出来事選択時は解説を非表示に
+            detailedExplanationArea.textContent = ''; // 解説エリアをクリア
+        }
+
+        /**
+         * 出来事の詳細表示をリセットします。
+         */
+        function resetEventDetail() {
+            eventDetailTitle.textContent = '出来事を選択してください';
+            eventDetailSummary.textContent = '';
+            eventDetailFigures.textContent = '';
+            document.querySelectorAll('.event-list li').forEach(item => {
+                item.classList.remove('selected');
+            });
+            detailedExplanationButton.style.display = 'none'; // ボタンを非表示に
+            detailedExplanationArea.style.display = 'none'; // 解説エリアを非表示に
+            detailedExplanationArea.textContent = ''; // 解説エリアをクリア
+        }
+
+        /**
+         * Gemini APIを呼び出してAIによる詳細解説を取得します。
+         */
+        async function getDetailedExplanation() {
+            if (!currentSelectedEvent) {
+                detailedExplanationArea.textContent = 'まず出来事を選択してください。';
+                detailedExplanationArea.style.display = 'block';
+                return;
+            }
+
+            detailedExplanationArea.innerHTML = 'AI先生が、もっと詳しいお話を用意しているよ... <span class="loading-spinner"></span>'; // ローディング表示
+            detailedExplanationArea.style.display = 'block';
+
+            const eventName = currentSelectedEvent.name;
+            const eventSummary = currentSelectedEvent.summary;
+            const eventFigures = currentSelectedEvent.figures;
+
+            // プロンプトの構築
+            let prompt = `日本の歴史の出来事「${eventName}」について、子供向けに漫画のセリフのように、登場人物（${eventFigures}）が会話している形式で、詳しく解説してください。ナレーションも入れて、物語のように楽しく学べるようにしてください。概要は「${eventSummary}」です。`;
+            prompt += `\n\n登場人物のセリフは「[人物名]: 」、ナレーションは「ナレーション: 」から始めてください。`; // フォーマットの指示
+
+            let chatHistory = [];
+            chatHistory.push({ role: "user", parts: [{ text: prompt }] });
+            const payload = { contents: chatHistory };
+            const apiKey = ""; // APIキーはCanvas環境で自動的に提供されます
+            const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${apiKey}`;
+
+            try {
+                const response = await fetch(apiUrl, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload)
+                });
+
+                if (!response.ok) {
+                    throw new Error(`APIエラー: ${response.status} ${response.statusText}`);
+                }
+
+                const result = await response.json();
+
+                if (result.candidates && result.candidates.length > 0 &&
+                    result.candidates[0].content && result.candidates[0].content.parts &&
+                    result.candidates[0].content.parts.length > 0) {
+                    const text = result.candidates[0].content.parts[0].text;
+                    // AIの回答を解析して表示
+                    detailedExplanationArea.innerHTML = formatComicStyleText(text);
+                } else {
+                    detailedExplanationArea.textContent = 'AIの詳しい解説を生成できませんでした。';
+                    console.error('Unexpected API response structure:', result);
+                }
+            } catch (error) {
+                detailedExplanationArea.textContent = `詳しい解説の取得中にエラーが発生しました: ${error.message}`;
+                console.error('Error fetching detailed explanation:', error);
+            }
+        }
+
+        /**
+         * AIからのテキストを漫画スタイルにフォーマットします。
+         * 「[人物名]: 」や「ナレーション: 」を解析してHTMLに変換します。
+         * @param {string} text - AIからの生のテキスト
+         * @returns {string} - フォーマットされたHTML文字列
+         */
+        function formatComicStyleText(text) {
+            const lines = text.split('\n').filter(line => line.trim() !== '');
+            let formattedHtml = '';
+            lines.forEach(line => {
+                if (line.startsWith('ナレーション:')) {
+                    formattedHtml += `<span class="narration">${line.replace('ナレーション:', '').trim()}</span>`;
+                } else if (line.includes(':')) {
+                    const parts = line.split(':', 2);
+                    const speaker = parts[0].trim();
+                    const dialogue = parts[1].trim();
+                    formattedHtml += `<div><span class="speaker">${speaker}:</span> ${dialogue}</div>`;
+                } else {
+                    formattedHtml += `<div>${line}</div>`; // その他の行はそのまま表示
+                }
+            });
+            return formattedHtml;
+        }
+
+
+        /**
+         * Gemini APIを呼び出してAIによる回答を取得します。
+         */
+        async function askAI() {
+            const question = aiQuestionInput.value.trim();
+            if (!question) {
+                aiResponseArea.textContent = '質問を入力してください。';
+                aiResponseArea.style.color = '#dc2626'; // エラーの色
+                return;
+            }
+
+            aiResponseArea.innerHTML = 'AI先生が考え中だよ... <span class="loading-spinner"></span>'; // ローディング表示
+            aiResponseArea.style.color = '#1e3a8a'; // ローディングメッセージの色
+
+            // プロンプトの構築
+            let prompt = `日本の歴史に関する質問です。以下の質問に子供にも分かりやすく、会話形式で簡潔に答えてください。\n\n質問: ${question}\n\n`;
+
+            if (currentSelectedEra) {
+                prompt += `現在、「${currentSelectedEra}」の時代が選択されています。この時代の情報も考慮に入れてください。`;
+                if (historyData[currentSelectedEra] && historyData[currentSelectedEra].description) {
+                    prompt += `時代概要: ${historyData[currentSelectedEra].description}\n`;
+                }
+            }
+            if (currentSelectedEvent) {
+                prompt += `現在、「${currentSelectedEvent.name}」という出来事が選択されています。この出来事に関する情報も考慮に入れてください。\n`;
+                prompt += `出来事概要: ${currentSelectedEvent.summary}\n`;
+                prompt += `登場人物: ${currentSelectedEvent.figures}\n`;
+            }
+
+            let chatHistory = [];
+            chatHistory.push({ role: "user", parts: [{ text: prompt }] });
+            const payload = { contents: chatHistory };
+            const apiKey = ""; // APIキーはCanvas環境で自動的に提供されます
+            const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${apiKey}`;
+
+            try {
+                const response = await fetch(apiUrl, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload)
+                });
+
+                if (!response.ok) {
+                    throw new Error(`APIエラー: ${response.status} ${response.statusText}`);
+                }
+
+                const result = await response.json();
+
+                if (result.candidates && result.candidates.length > 0 &&
+                    result.candidates[0].content && result.candidates[0].content.parts &&
+                    result.candidates[0].content.parts.length > 0) {
+                    const text = result.candidates[0].content.parts[0].text;
+                    aiResponseArea.innerHTML = `<strong>AI先生からの特別解説だよ！</strong><br>${text}`; // AIの回答を会話形式で表示
+                    aiResponseArea.style.color = '#1e3a8a'; // 回答の色
+                } else {
+                    aiResponseArea.textContent = 'AIの回答を生成できませんでした。';
+                    aiResponseArea.style.color = '#dc2626'; // エラーの色
+                    console.error('Unexpected API response structure:', result);
+                }
+            } catch (error) {
+                aiResponseArea.textContent = `回答の取得中にエラーが発生しました: ${error.message}`;
+                aiResponseArea.style.color = '#dc2626'; // エラーの色
+                console.error('Error fetching AI response:', error);
+            }
+        }
+
+        // イベントリスナーを設定
+        askAiButton.addEventListener('click', askAI);
+        aiQuestionInput.addEventListener('keydown', (event) => {
+            if (event.key === 'Enter' && !event.shiftKey) { // Shift+Enterで改行、Enterのみで送信
+                event.preventDefault(); // デフォルトの改行を抑制
+                askAI();
+            }
+        });
+        detailedExplanationButton.addEventListener('click', getDetailedExplanation); // 新しいボタンのイベントリスナー
+
+        // アプリ起動時の初期化
+        window.onload = function() {
+            createEraButtons();
+            // 最初の時代をデフォルトで選択
+            const firstEra = Object.keys(historyData)[0];
+            if (firstEra) {
+                selectEra(firstEra);
+            }
+        };
+    </script>
+</body>
+</html>
